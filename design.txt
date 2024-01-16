@@ -1,0 +1,17 @@
+# Menu
+
+# Une série de radiobuttons horizontaux pour le choix de nombre de mots
+(de 4 à 10)
+
+# Un lineedit pour entrer le séparateur (caratère quelconque entré au 
+clavier)
+
+# Choisir la liste (diceware ou français.wordlist)
+
+# Un affichage de la liste générée (au démarrage générer une première 
+liste)
+
+# Une mesure de l'entropie et un classement (faible <40, moyen <70, for
+< 110, très fort > 110...)
+
+# entropie = log2 (taille du vocabulaire ^ longueur du mot de passe)
