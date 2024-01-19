@@ -14,3 +14,8 @@ liste)
 # Groupe 5. Une mesure de l'entropie et un classement (faible <40, moyen <70, for
 < 110, très fort > 110...)
 (entropie = log2 (taille du vocabulaire ^ longueur du mot de passe))
+
+Menu
+----
+File : Nouvelle, Sauvegarder, Quitter
+Aide : Licence, Readme, Documentation, À propos

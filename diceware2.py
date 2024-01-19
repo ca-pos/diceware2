@@ -1,8 +1,10 @@
-from ast import main
-import sys
+#from ast import main
 #from typing import Optional
-from PySide6.QtCore import Qt, QSize
 
+import sys
+from tarfile import NUL
+from PySide6.QtCore import Qt, QSize
+from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QRadioButton, QLabel, QGroupBox, QLineEdit, QListWidget, QGridLayout
 
 h_size_max = 400
@@ -20,6 +22,34 @@ class MainWindow(QMainWindow):
         self.create_widgets()
         self.create_btn_words_number()
         self.ajout_widgets_au_main_layout()
+        self.create_actions()
+        self.create_menubar()
+        self.create_statusbar()
+#--------------------------------------------------------------------------------
+    def create_actions(self):
+        # Créer une nouvelle phrase
+        #self.act_nouvelle = CAction(QIcon("icons/new.png"), "&Nouvelle phrase", self)
+        msg = "Créer une nouvelle phrase secrète"
+        self.act_nouvelle = CAction( "&Nouvelle", "new", "N", msg)
+        msg = "Enregister dans un fichier"
+        self.act_enregistrer = CAction("&Enregistrer", "save", "S", msg)
+        msg = "Quitter"
+        self.act_quitter =CAction("&Quitter", "exit", "Q", msg)
+#--------------------------------------------------------------------------------
+    def create_menubar(self):
+        menu_bar = self.menuBar()
+        menu_bar.setStyleSheet(f"background-color: {self.bg_color}")
+        # Fichier
+        file = menu_bar.addMenu("&Fichier")
+        file.addAction(self.act_nouvelle)
+        file.addAction(self.act_enregistrer)
+        file.addAction(self.act_quitter)
+        # Aide
+        help = menu_bar.addMenu("&Aide")
+#--------------------------------------------------------------------------------
+    def create_statusbar(self):
+        status_bar = self.statusBar()
+        status_bar.showMessage("Générateur de phrases secrètes")
 #--------------------------------------------------------------------------------
     def declare_variables(self):
         ### Constantes de tailles des widgets
@@ -30,6 +60,8 @@ class MainWindow(QMainWindow):
         self.g1g2_size = QSize(190, 90)
         self.g3_size = QSize(self.h_window, 50)
         self.phrase_size = QSize(self.h_window, 80)
+
+        self.bg_color = "#abc"
 
         self.btn_nb_mots = list() # liste boutons (créés sans label)
         self.lbl_nb_mots = list() # liste labels à placer sous les boutons
@@ -60,7 +92,7 @@ class MainWindow(QMainWindow):
         # création d'un container permettant l'application d'un style
         self.container = QWidget(self)
         self.container.setFixedSize(main_size)
-        self.container.setStyleSheet("background-color: #bbc")
+        self.container.setStyleSheet(f"background-color: {self.bg_color}")
         # Le main layout a container comme parent
         self.main_layout = QGridLayout(self.container)
         self.main_layout.setSpacing(5)
@@ -173,6 +205,25 @@ class MainWindow(QMainWindow):
 
         ### Groupe 5. Affichage de l'entropie
         self.main_layout.addWidget(self.entropy_window, 3, 0, 1, 2)   
+#################################################################################
+class CAction(QAction):
+    def __init__(self, text, icon, shortcut, msg = ""):
+        super().__init__(text)
+        self.action = dict()
+        on = text.lower().replace( "&", "")
+        self.action['nouvelle'] = self.on_nouvelle
+        self.action['enregistrer'] = self.on_enregistrer
+        self.action['quitter'] = self.on_quitter
+        self.setShortcut("Ctrl+" + shortcut)
+        self.setIcon(QIcon("icons/" + icon + ".png"))
+        self.setStatusTip(msg)
+        self.triggered.connect(self.action[on])
+    def on_nouvelle(self):
+        print("NNN")
+    def on_enregistrer(self):
+        print("EEE")
+    def on_quitter(self):
+        print("QQQ")
 #################################################################################
 def main():
     app = QApplication(sys.argv)
