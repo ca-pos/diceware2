@@ -1,5 +1,6 @@
 #from ast import main
 #from typing import Optional
+from cmath import phase
 import sys
 #from tarfile import NUL
 from PySide6.QtCore import Qt, QSize
@@ -32,6 +33,8 @@ class MainWindow(QMainWindow):
         self.lbl_nb_mots = list() # liste labels à placer sous les boutons
         self.lyt_nb_mots = list() # liste layouts pour placer boutons et labels
 
+        self.new_phrase = ""
+
         self.entropy_value = 113.48
         self.entropy_eval = 'Excellent'
 
@@ -51,7 +54,9 @@ class MainWindow(QMainWindow):
         self.create_actions()
         self.create_menubar()
         self.create_statusbar()
-        self.phrase.addItem(self.generate_phrase())
+        self.generate_phrase()
+        self.display_phrase()
+#        self.phrase.addItem(self.new_phrase)
 #--------------------------------------------------------------------------------
     def create_actions(self):
         ### Menu action#
@@ -69,9 +74,7 @@ class MainWindow(QMainWindow):
         self.act_quitter.triggered.connect(self.on_quit)
 #--------------------------------------------------------------------------------
     def on_new(self):
-        self.phrase.clear()
-        self.texte = self.generate_phrase()
-        self.phrase.addItem(self.texte)
+        self.display_phrase(self.generate_phrase())
 #--------------------------------------------------------------------------------
     def on_save(self):
         print("EEE")
@@ -166,6 +169,7 @@ class MainWindow(QMainWindow):
         le_choix_sep = QLineEdit()
         le_choix_sep.setFixedSize(25, 25)
         le_choix_sep.setText(" ")    # séparateur par défaut
+        le_choix_sep.textChanged.connect(self.sep_changed)
         self.sep_name = "[espace]"   # espace
         lbl_choix_sep = QLabel(f"Caractère(s) de séparation pour la sauvegarde  ({self.sep_name})")
         # ajout du label et du lineedit au layout
@@ -220,11 +224,13 @@ class MainWindow(QMainWindow):
             self.gbox2_layout.addLayout(self.lyt_nb_mots[i])
     def on_btn(self):
         self.nb_words = self.sender().value
+        self.generate_phrase()
         self.display_phrase()
 #--------------------------------------------------------------------------------
     def display_phrase(self):
+        """efface la phrase précédente dans la fenêtre "phrase" puis affiche "phrase" """
         self.phrase.clear()
-        self.phrase.addItem(self.generate_phrase())
+        self.phrase.addItem(self.new_phrase)
 #--------------------------------------------------------------------------------
     def add_widgets_to_main_layout(self):
         ### Groupe 1. Composition phrase
@@ -245,10 +251,22 @@ class MainWindow(QMainWindow):
     def list1(self):
         self.list = "l1.txt"
         self.list_only_words = True
+        self.generate_phrase()
+        self.display_phrase()
 #--------------------------------------------------------------------------------
     def list2(self):
         self.list = "l2.txt"
         self.list_only_words = False
+        self.generate_phrase()
+        self.display_phrase()
+#--------------------------------------------------------------------------------
+    def sep_changed(self, new_sep):
+        if new_sep.isprintable():
+            old_sep = self.sep_char
+            self.sep_char = new_sep
+            tmp = self.new_phrase.replace(old_sep, new_sep)
+            print(old_sep, new_sep, self.new_phrase, tmp)
+            self.display_phrase()
 #--------------------------------------------------------------------------------
     def generate_phrase(self):
         word_list = self.read_words_list()
@@ -259,7 +277,13 @@ class MainWindow(QMainWindow):
                 phrase += (word_list[rand])
                 if i < self.nb_words-1:
                     phrase += self.sep_char
-            return phrase
+        else:
+            for i in range(0, self.nb_words):
+                index = self.roll_dices()
+                phrase += word_list[index][5:].replace(" ", "")
+                if i < self.nb_words-1:
+                    phrase += self.sep_char
+        self.new_phrase = phrase
 #--------------------------------------------------------------------------------
     def read_words_list(self):
         word_list = list()
@@ -268,6 +292,14 @@ class MainWindow(QMainWindow):
         for line in lines:
             word_list.append(line.replace("\n", ""))
         return word_list
+#--------------------------------------------------------------------------------
+    def roll_dices(self):
+        index = 0
+        for i in range(0,5):    # 5 lancers de dés
+            rand = secrets.randbelow(6)
+            # calcul de l'index (multiples des puissances de 6)
+            index += pow(6, i)*rand 
+        return index
 #################################################################################
 class CAction(QAction):
     action = dict()
