@@ -1,11 +1,12 @@
 #from ast import main
 #from typing import Optional
-
 import sys
-from tarfile import NUL
+#from tarfile import NUL
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QAction, QIcon
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QRadioButton, QLabel, QGroupBox, QLineEdit, QListWidget, QGridLayout
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QRadioButton, QLabel, QGroupBox, QLineEdit, QListWidget, QGridLayout, QButtonGroup
+
+import secrets
 
 h_size_max = 400
 main_size = QSize(h_size_max,400)
@@ -14,42 +15,6 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setUI()
-#--------------------------------------------------------------------------------
-    def setUI(self):
-        self.declare_variables()
-        self.create_groups()
-        self.create_layouts()
-        self.create_widgets()
-        self.create_btn_words_number()
-        self.ajout_widgets_au_main_layout()
-        self.create_actions()
-        self.create_menubar()
-        self.create_statusbar()
-#--------------------------------------------------------------------------------
-    def create_actions(self):
-        # Créer une nouvelle phrase
-        #self.act_nouvelle = CAction(QIcon("icons/new.png"), "&Nouvelle phrase", self)
-        msg = "Créer une nouvelle phrase secrète"
-        self.act_nouvelle = CAction( "&Nouvelle", "new", "N", msg)
-        msg = "Enregister dans un fichier"
-        self.act_enregistrer = CAction("&Enregistrer", "save", "S", msg)
-        msg = "Quitter"
-        self.act_quitter =CAction("&Quitter", "exit", "Q", msg)
-#--------------------------------------------------------------------------------
-    def create_menubar(self):
-        menu_bar = self.menuBar()
-        menu_bar.setStyleSheet(f"background-color: {self.bg_color}")
-        # Fichier
-        file = menu_bar.addMenu("&Fichier")
-        file.addAction(self.act_nouvelle)
-        file.addAction(self.act_enregistrer)
-        file.addAction(self.act_quitter)
-        # Aide
-        help = menu_bar.addMenu("&Aide")
-#--------------------------------------------------------------------------------
-    def create_statusbar(self):
-        status_bar = self.statusBar()
-        status_bar.showMessage("Générateur de phrases secrètes")
 #--------------------------------------------------------------------------------
     def declare_variables(self):
         ### Constantes de tailles des widgets
@@ -69,10 +34,69 @@ class MainWindow(QMainWindow):
 
         self.entropy_value = 113.48
         self.entropy_eval = 'Excellent'
+
+        self.list = "l1.txt"
+        self.list_only_words = True
+
+        self.nb_words = 7
+        self.sep_char = " "
+#--------------------------------------------------------------------------------
+    def setUI(self):
+        self.declare_variables()
+        self.create_groups()
+        self.create_layouts()
+        self.create_widgets()
+        self.create_btn_words_number()
+        self.add_widgets_to_main_layout()
+        self.create_actions()
+        self.create_menubar()
+        self.create_statusbar()
+        self.phrase.addItem(self.generate_phrase())
+#--------------------------------------------------------------------------------
+    def create_actions(self):
+        ### Menu action#
+        #
+        msg = "Créer une nouvelle phrase secrète"
+        self.act_nouvelle = CAction( "&Nouvelle", "new", "N", msg)
+        self.act_nouvelle.triggered.connect(self.on_new)
+
+        msg = "Enregister dans un fichier"
+        self.act_enregistrer = CAction("&Enregistrer", "save", "S", msg)
+        self.act_enregistrer.triggered.connect(self.on_save)
+
+        msg = "Quitter"
+        self.act_quitter =CAction("&Quitter", "exit", "Q", msg)
+        self.act_quitter.triggered.connect(self.on_quit)
+#--------------------------------------------------------------------------------
+    def on_new(self):
+        self.phrase.clear()
+        self.texte = self.generate_phrase()
+        self.phrase.addItem(self.texte)
+#--------------------------------------------------------------------------------
+    def on_save(self):
+        print("EEE")
+#--------------------------------------------------------------------------------
+    def on_quit(self):
+        print("QQQ")
+#--------------------------------------------------------------------------------
+    def create_menubar(self):
+        menu_bar = self.menuBar()
+        menu_bar.setStyleSheet(f"background-color: {self.bg_color}")
+        # Fichier
+        file = menu_bar.addMenu("&Fichier")
+        file.addAction(self.act_nouvelle)
+        file.addAction(self.act_enregistrer)
+        file.addAction(self.act_quitter)
+        # Aide
+        help = menu_bar.addMenu("&Aide")
+#--------------------------------------------------------------------------------
+    def create_statusbar(self):
+        status_bar = self.statusBar()
+        status_bar.showMessage("Générateur de phrases secrètes")
 #--------------------------------------------------------------------------------
     def create_groups(self):
         # Groupe 1. Composition de la phrase (mots ou mots/non mots)
-        self.group_1 = QGroupBox("Composition de la phrase")
+        self.group_1 = QGroupBox( "Composition de la phrase")
         self.group_1.setFixedSize(self.g1g2_size)
 
         # Groupe 2. Nombre de mots de la phrase
@@ -124,11 +148,15 @@ class MainWindow(QMainWindow):
         self.entropy_window.setLayout(self.entropy_layout)
 #--------------------------------------------------------------------------------
     def create_widgets(self):
+        self.texte = ""
     
         ### Groupe 1. Composition de la phrase, création des boutons du groupe 1 
         #
         btn_l1 = QRadioButton("Mots uniquement")    # choix de diceware
+        btn_l1.setChecked(True)
+        btn_l1.clicked.connect(self.list1)
         btn_l2 = QRadioButton("Mots et non mots")   # choix de wordlist
+        btn_l2.clicked.connect(self.list2)
         # ajout des boutons au layout du groupe 1
         self.gbox1_layout.addWidget(btn_l1)
         self.gbox1_layout.addWidget(btn_l2)
@@ -137,8 +165,8 @@ class MainWindow(QMainWindow):
         #
         le_choix_sep = QLineEdit()
         le_choix_sep.setFixedSize(25, 25)
-        le_choix_sep.setText("")    # séparateur par défaut
-        self.sep_name = "[aucun]"        # aucun
+        le_choix_sep.setText(" ")    # séparateur par défaut
+        self.sep_name = "[espace]"   # espace
         lbl_choix_sep = QLabel(f"Caractère(s) de séparation pour la sauvegarde  ({self.sep_name})")
         # ajout du label et du lineedit au layout
         self.lyt_choix_sep.addWidget(lbl_choix_sep)
@@ -146,10 +174,9 @@ class MainWindow(QMainWindow):
 
         ### Groupe 4. Affichage de la phrase
         #
-        self.texte = "sperme exil éveil ulcère tract rock partie étang pendule cornemuse"
         self.phrase = QListWidget()
         self.phrase.setFixedSize(self.phrase_size)
-        self.phrase.addItem(self.texte)
+        #self.phrase.addItem(self.texte)
 
         ### Groupe 5. Affichage de l'entropie et de son évaluation
         #
@@ -172,6 +199,8 @@ class MainWindow(QMainWindow):
         ###
         for i in range(7):  # création de 7 boutons
             btn = QRadioButton("")  # création d'un bouton sans label
+            btn.clicked.connect(self.on_btn)
+            btn.value = i+4
             self.btn_nb_mots.append(btn) # le sauvegarder dans une liste
             if i == 3: # 7 mots, valeur par défaut
                 btn.setChecked(True)
@@ -189,8 +218,15 @@ class MainWindow(QMainWindow):
             self.lyt_nb_mots[i].addWidget(self.lbl_nb_mots[i])
             # ajout du bouton créé au layout du groupe de boutons(gbox2_layout)
             self.gbox2_layout.addLayout(self.lyt_nb_mots[i])
+    def on_btn(self):
+        self.nb_words = self.sender().value
+        self.display_phrase()
 #--------------------------------------------------------------------------------
-    def ajout_widgets_au_main_layout(self):
+    def display_phrase(self):
+        self.phrase.clear()
+        self.phrase.addItem(self.generate_phrase())
+#--------------------------------------------------------------------------------
+    def add_widgets_to_main_layout(self):
         ### Groupe 1. Composition phrase
         self.main_layout.addWidget(self.group_1, 0, 0, 1, 1)
 
@@ -205,25 +241,42 @@ class MainWindow(QMainWindow):
 
         ### Groupe 5. Affichage de l'entropie
         self.main_layout.addWidget(self.entropy_window, 3, 0, 1, 2)   
+#--------------------------------------------------------------------------------
+    def list1(self):
+        self.list = "l1.txt"
+        self.list_only_words = True
+#--------------------------------------------------------------------------------
+    def list2(self):
+        self.list = "l2.txt"
+        self.list_only_words = False
+#--------------------------------------------------------------------------------
+    def generate_phrase(self):
+        word_list = self.read_words_list()
+        phrase = str()
+        if self.list_only_words:
+            for i in range(0, self.nb_words):
+                rand = secrets.randbelow(len(word_list))
+                phrase += (word_list[rand])
+                if i < self.nb_words-1:
+                    phrase += self.sep_char
+            return phrase
+#--------------------------------------------------------------------------------
+    def read_words_list(self):
+        word_list = list()
+        with open( self.list, "r") as file:
+            lines = file.readlines()
+        for line in lines:
+            word_list.append(line.replace("\n", ""))
+        return word_list
 #################################################################################
 class CAction(QAction):
+    action = dict()
     def __init__(self, text, icon, shortcut, msg = ""):
         super().__init__(text)
-        self.action = dict()
-        on = text.lower().replace( "&", "")
-        self.action['nouvelle'] = self.on_nouvelle
-        self.action['enregistrer'] = self.on_enregistrer
-        self.action['quitter'] = self.on_quitter
+
         self.setShortcut("Ctrl+" + shortcut)
         self.setIcon(QIcon("icons/" + icon + ".png"))
         self.setStatusTip(msg)
-        self.triggered.connect(self.action[on])
-    def on_nouvelle(self):
-        print("NNN")
-    def on_enregistrer(self):
-        print("EEE")
-    def on_quitter(self):
-        print("QQQ")
 #################################################################################
 def main():
     app = QApplication(sys.argv)
