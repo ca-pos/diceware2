@@ -33,7 +33,7 @@ class MainWindow(QMainWindow):
         self.lbl_nb_mots = list() # liste labels à placer sous les boutons
         self.lyt_nb_mots = list() # liste layouts pour placer boutons et labels
 
-        self.new_phrase = ""
+        self.new_phrase = list()
 
         self.entropy_value = 113.48
         self.entropy_eval = 'Excellent'
@@ -74,7 +74,8 @@ class MainWindow(QMainWindow):
         self.act_quitter.triggered.connect(self.on_quit)
 #--------------------------------------------------------------------------------
     def on_new(self):
-        self.display_phrase(self.generate_phrase())
+        self.generate_phrase()
+        self.display_phrase()
 #--------------------------------------------------------------------------------
     def on_save(self):
         print("EEE")
@@ -230,7 +231,13 @@ class MainWindow(QMainWindow):
     def display_phrase(self):
         """efface la phrase précédente dans la fenêtre "phrase" puis affiche "phrase" """
         self.phrase.clear()
-        self.phrase.addItem(self.new_phrase)
+        phrase = str()
+        length = len(self.new_phrase)
+        for i in range(0, length):
+            phrase += self.new_phrase[i]
+            if not i == length-1:
+                phrase += self.sep_char
+        self.phrase.addItem(phrase)
 #--------------------------------------------------------------------------------
     def add_widgets_to_main_layout(self):
         ### Groupe 1. Composition phrase
@@ -264,26 +271,22 @@ class MainWindow(QMainWindow):
         if new_sep.isprintable():
             old_sep = self.sep_char
             self.sep_char = new_sep
-            tmp = self.new_phrase.replace(old_sep, new_sep)
-            print(old_sep, new_sep, self.new_phrase, tmp)
+            #tmp = self.new_phrase.replace(old_sep, new_sep)
+            #print(old_sep, new_sep, self.new_phrase, tmp)
             self.display_phrase()
 #--------------------------------------------------------------------------------
     def generate_phrase(self):
         word_list = self.read_words_list()
-        phrase = str()
+        phrase_list = list()
         if self.list_only_words:
             for i in range(0, self.nb_words):
                 rand = secrets.randbelow(len(word_list))
-                phrase += (word_list[rand])
-                if i < self.nb_words-1:
-                    phrase += self.sep_char
+                phrase_list.append(word_list[rand])
         else:
             for i in range(0, self.nb_words):
                 index = self.roll_dices()
-                phrase += word_list[index][5:].replace(" ", "")
-                if i < self.nb_words-1:
-                    phrase += self.sep_char
-        self.new_phrase = phrase
+                phrase_list.append(word_list[index][5:].replace(" ", ""))
+        self.new_phrase = phrase_list
 #--------------------------------------------------------------------------------
     def read_words_list(self):
         word_list = list()
