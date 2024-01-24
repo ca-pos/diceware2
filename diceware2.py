@@ -2,10 +2,11 @@
 #from typing import Optional
 from cmath import phase
 import sys
+from typing import Optional
 #from tarfile import NUL
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QAction, QIcon
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QRadioButton, QLabel, QGroupBox, QLineEdit, QListWidget, QGridLayout, QButtonGroup
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QRadioButton, QLabel, QGroupBox, QLineEdit, QListWidget, QGridLayout, QFileDialog, QDialog, QPushButton, QDialogButtonBox
 
 import secrets
 
@@ -34,6 +35,7 @@ class MainWindow(QMainWindow):
         self.lyt_nb_mots = list() # liste layouts pour placer boutons et labels
 
         self.new_phrase = list()
+        self.phrase_saved = False
 
         self.entropy_value = 113.48
         self.entropy_eval = 'Excellent'
@@ -56,7 +58,6 @@ class MainWindow(QMainWindow):
         self.create_statusbar()
         self.generate_phrase()
         self.display_phrase()
-#        self.phrase.addItem(self.new_phrase)
 #--------------------------------------------------------------------------------
     def create_actions(self):
         ### Menu action#
@@ -71,17 +72,46 @@ class MainWindow(QMainWindow):
 
         msg = "Quitter"
         self.act_quitter =CAction("&Quitter", "exit", "Q", msg)
-        self.act_quitter.triggered.connect(self.on_quit)
+        self.act_quitter.triggered.connect(self.closeEvent)
 #--------------------------------------------------------------------------------
     def on_new(self):
         self.generate_phrase()
         self.display_phrase()
 #--------------------------------------------------------------------------------
     def on_save(self):
-        print("EEE")
+        dialog = QFileDialog(self)
+        dialog.setDirectory("/home/camille")
+
+        if dialog.exec():
+            file =dialog.selectedFiles()
+            try:
+                open(file[0])
+            except(FileNotFoundError):
+                self.save_ok(file[0])
+            else:
+                self.file_exists(file[0])
 #--------------------------------------------------------------------------------
-    def on_quit(self):
-        print("QQQ")
+    def file_exists(self, file):
+        choix = CDialog(message='Le fichier existe, voulez-vous le remplacer ?')
+        choix.exec()
+        if choix.retStatus:
+            self.save_ok(file)
+#--------------------------------------------------------------------------------
+    def save_ok(self, file):
+        phrase = self.compose_phrase()
+        with open(file, "w") as f:
+            f.write(phrase)
+        self.phrase_saved = True
+#--------------------------------------------------------------------------------
+    def closeEvent(self, event):
+        if self.phrase_saved:
+            quit()
+        choix = CDialog("La phrase secrète n'est pas sauvegardée\nQuitter quand même ?")
+        choix.exec()
+        if choix.retStatus:
+            quit()
+        elif not isinstance(event, bool):
+            event.ignore()
 #--------------------------------------------------------------------------------
     def create_menubar(self):
         menu_bar = self.menuBar()
@@ -231,13 +261,17 @@ class MainWindow(QMainWindow):
     def display_phrase(self):
         """efface la phrase précédente dans la fenêtre "phrase" puis affiche "phrase" """
         self.phrase.clear()
+        phrase = self.compose_phrase()
+        self.phrase.addItem(phrase)
+#--------------------------------------------------------------------------------
+    def compose_phrase(self):
         phrase = str()
         length = len(self.new_phrase)
         for i in range(0, length):
             phrase += self.new_phrase[i]
             if not i == length-1:
                 phrase += self.sep_char
-        self.phrase.addItem(phrase)
+        return phrase
 #--------------------------------------------------------------------------------
     def add_widgets_to_main_layout(self):
         ### Groupe 1. Composition phrase
@@ -303,6 +337,29 @@ class MainWindow(QMainWindow):
             # calcul de l'index (multiples des puissances de 6)
             index += pow(6, i)*rand 
         return index
+#################################################################################
+class CDialog(QDialog):
+    def __init__(self, message = "") -> None:
+        super().__init__()
+        btn_yes = QPushButton("Oui")
+        btn_yes.clicked.connect(self.ok)
+        btn_no = QPushButton("Annuler")
+        btn_no.clicked.connect(self.cancel)
+        buttons = QDialogButtonBox()
+        buttons.addButton(btn_yes, QDialogButtonBox.ButtonRole.AcceptRole)
+        buttons.addButton(btn_no, QDialogButtonBox.ButtonRole.RejectRole)
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel(message))
+        layout.addWidget(buttons)
+        self.setLayout(layout)
+#--------------------------------------------------------------------------------
+    def ok(self):
+        self.retStatus = True
+        self.close()
+#--------------------------------------------------------------------------------
+    def cancel(self):
+        self.retStatus = False
+        self.close()
 #################################################################################
 class CAction(QAction):
     action = dict()
