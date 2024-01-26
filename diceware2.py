@@ -3,6 +3,7 @@
 #from tarfile import NUL
 #from cmath import phase
 #from typing import Optional
+from hmac import new
 import sys
 from math import log2
 from PySide6.QtCore import Qt, QSize
@@ -78,33 +79,63 @@ class MainWindow(QMainWindow):
 
         # Aide
         msg = "Licence"
-        self.act_show_licence = CAction("Licence &GPL (Français)", "open-source", "L", msg)
+        self.act_show_licence = CAction("&Licence GPL (Français)", "open-source", "L", msg)
         self.act_show_licence.triggered.connect(self.show_licence)
+        msg = "Readme"
+        self.act_show_readme = CAction("&Readme", "readme", "R", msg)
+        self.act_show_readme.triggered.connect(self.show_readme)
+        msg = "Documentation"
+        self.act_show_documentation = CAction("&Documentation", "help", "D", msg)
+        self.act_show_documentation.triggered.connect(self.show_documentation)
+        msg = "À Propos"
+        self.act_show_about = CAction("À &Propos", "about", "P", msg)
+        self.act_show_about.triggered.connect(self.show_about)
+        # A E F L N P Q R
+#--------------------------------------------------------------------------------
+    def show_about(self):
+        text = self.read_file_text("about.inc")
+        self.show_info("À Propos", text)
+#--------------------------------------------------------------------------------
+    def show_documentation(self):
+        text = self.read_file_text("documentation.inc")
+        self.show_info("Documentation", text)
+#--------------------------------------------------------------------------------
+    def show_readme(self):
+        text = self.read_file_text("README.md")
+        size = QSize(300, 200)
+        self.show_info("Readme", text, size)
 #--------------------------------------------------------------------------------
     def show_licence(self):
-        self.licence_window = QWidget()
-        self.licence_window.setMinimumSize(800,400)
-        self.licence_window.setWindowTitle("Licence Publique GNU")
+        text = self.read_file_text("gpl.inc")
+        self.show_info("Licence Publique GNU", text)
+#--------------------------------------------------------------------------------
+    def show_info(self, title:str, text:str, size = QSize(800, 400)):
+        self.info_window = QWidget()
+        self.info_window.setMinimumSize(size)
+        self.info_window.setWindowTitle(title)
         text_edit = QTextEdit()
+        text_edit.setReadOnly(True)
         btn = QPushButton("Fermer")
         btn.setFixedSize(100, 25)
         btn.clicked.connect(self.close_licence_window)
         layout = QVBoxLayout()
-#        layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         layout.addWidget(text_edit)
         layout.addWidget(btn, alignment=Qt.AlignmentFlag.AlignCenter)
+        text_edit.setHtml(text)
+        self.info_window.setLayout(layout)
+        self.info_window.show()
+#--------------------------------------------------------------------------------
+    def read_file_text(self, filename):
         text = str()
-        with open("gpl.inc", "r") as f:
+        with open(filename, "r") as f:
             line = f.readline()
             while line:
                 text += line
                 line = f.readline()
-        text_edit.setHtml(text)
-        self.licence_window.setLayout(layout)
-        self.licence_window.show()
+        return text
 #--------------------------------------------------------------------------------
     def close_licence_window(self):
-        self.licence_window.close()
+        self.info_window.close()
 #--------------------------------------------------------------------------------
     def on_new(self):
         self.generate_phrase()
@@ -156,6 +187,9 @@ class MainWindow(QMainWindow):
         # Aide
         help = menu_bar.addMenu("&Aide")
         help.addAction(self.act_show_licence)
+        help.addAction(self.act_show_readme)
+        help.addAction(self.act_show_documentation)
+        help.addAction(self.act_show_about)
 #--------------------------------------------------------------------------------
     def create_statusbar(self):
         status_bar = self.statusBar()
@@ -235,9 +269,9 @@ class MainWindow(QMainWindow):
         le_choix_sep.setText(" ")    # séparateur par défaut
         le_choix_sep.textChanged.connect(self.sep_changed)
         self.sep_name = "[espace]"   # espace
-        lbl_choix_sep = QLabel(f"Caractère(s) de séparation pour la sauvegarde  ({self.sep_name})")
+        self.lbl_choix_sep = QLabel(f"Caractère(s) de séparation pour la sauvegarde  ({self.sep_name})")
         # ajout du label et du lineedit au layout
-        self.lyt_choix_sep.addWidget(lbl_choix_sep)
+        self.lyt_choix_sep.addWidget(self.lbl_choix_sep)
         self.lyt_choix_sep.addWidget(le_choix_sep)
 
         ### Groupe 4. Affichage de la phrase
@@ -355,6 +389,13 @@ class MainWindow(QMainWindow):
         if new_sep.isprintable():
             old_sep = self.sep_char
             self.sep_char = new_sep
+            if new_sep == " ":
+                self.sep_name = "[espace]"
+            elif new_sep == "":
+                self.sep_name = "[aucun]"
+            else:
+                self.sep_name = new_sep
+            self.lbl_choix_sep.setText(f"Caractère(s) de séparation pour la sauvegarde  ({self.sep_name})")
             self.display_phrase()
 #--------------------------------------------------------------------------------
     def generate_phrase(self):
@@ -421,9 +462,10 @@ class CAction(QAction):
 #################################################################################
 def main():
     app = QApplication(sys.argv)
-    main_windows = MainWindow()
-    main_windows.setFixedSize(main_size)
-    main_windows.show()
+    main_window = MainWindow()
+    main_window.setFixedSize(main_size)
+    main_window.setWindowTitle("Générateur de phrases secrètes")
+    main_window.show()
     sys.exit(app.exec())
 #################################################################################
 if __name__ == '__main__':
