@@ -19,3 +19,6 @@ Menu
 ----
 File : Nouvelle, Sauvegarder, Quitter
 Aide : Licence, Readme, Documentation, À propos
+
+
+http://weber.fi.eu.org/software/diceware/src/francais.wordlist.asc

@@ -1,17 +1,18 @@
 #from ast import main
 #from typing import Optional
-from cmath import phase
-import sys
-from typing import Optional
 #from tarfile import NUL
+#from cmath import phase
+#from typing import Optional
+import sys
+from math import log2
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QAction, QIcon
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QRadioButton, QLabel, QGroupBox, QLineEdit, QListWidget, QGridLayout, QFileDialog, QDialog, QPushButton, QDialogButtonBox
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QRadioButton, QLabel, QGroupBox, QLineEdit, QListWidget, QGridLayout, QFileDialog, QDialog, QPushButton, QDialogButtonBox, QTextEdit
 
 import secrets
 
 h_size_max = 400
-main_size = QSize(h_size_max,400)
+main_size = QSize(h_size_max,280)
     
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
@@ -21,12 +22,10 @@ class MainWindow(QMainWindow):
     def declare_variables(self):
         ### Constantes de tailles des widgets
         ##
-        #self.h_window = h_size_max - 16
-
         self.h_window = h_size_max-16
         self.g1g2_size = QSize(190, 90)
         self.g3_size = QSize(self.h_window, 50)
-        self.phrase_size = QSize(self.h_window, 80)
+        self.phrase_size = QSize(self.h_window, 40)
 
         self.bg_color = "#abc"
 
@@ -37,8 +36,8 @@ class MainWindow(QMainWindow):
         self.new_phrase = list()
         self.phrase_saved = False
 
-        self.entropy_value = 113.48
-        self.entropy_eval = 'Excellent'
+        self.entropy_value = 0
+        self.entropy_eval = ''
 
         self.list = "l1.txt"
         self.list_only_words = True
@@ -56,12 +55,15 @@ class MainWindow(QMainWindow):
         self.create_actions()
         self.create_menubar()
         self.create_statusbar()
+        # générer une phrase avec les paramètres par défaut dès le démarrage
         self.generate_phrase()
+        self.entropy_value = self.compute_entropy()
         self.display_phrase()
 #--------------------------------------------------------------------------------
     def create_actions(self):
-        ### Menu action#
+        ### Menu action
         #
+        # Fichier
         msg = "Créer une nouvelle phrase secrète"
         self.act_nouvelle = CAction( "&Nouvelle", "new", "N", msg)
         self.act_nouvelle.triggered.connect(self.on_new)
@@ -73,6 +75,36 @@ class MainWindow(QMainWindow):
         msg = "Quitter"
         self.act_quitter =CAction("&Quitter", "exit", "Q", msg)
         self.act_quitter.triggered.connect(self.closeEvent)
+
+        # Aide
+        msg = "Licence"
+        self.act_show_licence = CAction("Licence &GPL (Français)", "open-source", "L", msg)
+        self.act_show_licence.triggered.connect(self.show_licence)
+#--------------------------------------------------------------------------------
+    def show_licence(self):
+        self.licence_window = QWidget()
+        self.licence_window.setMinimumSize(800,400)
+        self.licence_window.setWindowTitle("Licence Publique GNU")
+        text_edit = QTextEdit()
+        btn = QPushButton("Fermer")
+        btn.setFixedSize(100, 25)
+        btn.clicked.connect(self.close_licence_window)
+        layout = QVBoxLayout()
+#        layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout.addWidget(text_edit)
+        layout.addWidget(btn, alignment=Qt.AlignmentFlag.AlignCenter)
+        text = str()
+        with open("gpl.inc", "r") as f:
+            line = f.readline()
+            while line:
+                text += line
+                line = f.readline()
+        text_edit.setHtml(text)
+        self.licence_window.setLayout(layout)
+        self.licence_window.show()
+#--------------------------------------------------------------------------------
+    def close_licence_window(self):
+        self.licence_window.close()
 #--------------------------------------------------------------------------------
     def on_new(self):
         self.generate_phrase()
@@ -123,6 +155,7 @@ class MainWindow(QMainWindow):
         file.addAction(self.act_quitter)
         # Aide
         help = menu_bar.addMenu("&Aide")
+        help.addAction(self.act_show_licence)
 #--------------------------------------------------------------------------------
     def create_statusbar(self):
         status_bar = self.statusBar()
@@ -256,6 +289,7 @@ class MainWindow(QMainWindow):
     def on_btn(self):
         self.nb_words = self.sender().value
         self.generate_phrase()
+        self.entropy_value = self.compute_entropy()
         self.display_phrase()
 #--------------------------------------------------------------------------------
     def display_phrase(self):
@@ -293,20 +327,34 @@ class MainWindow(QMainWindow):
         self.list = "l1.txt"
         self.list_only_words = True
         self.generate_phrase()
+        self.entropy_value = self.compute_entropy()
         self.display_phrase()
 #--------------------------------------------------------------------------------
     def list2(self):
         self.list = "l2.txt"
         self.list_only_words = False
         self.generate_phrase()
+        self.entropy_value = self.compute_entropy()
         self.display_phrase()
+#--------------------------------------------------------------------------------
+    def compute_entropy(self):
+        self.entropy_value = log2(pow(self.vocabulary_size, self.nb_words))
+        if self.entropy_value < 50:
+            entropy_eval = 'Faible'
+        elif self.entropy_value < 70:
+            entropy_eval= 'Moyen'
+        elif self.entropy_value < 110:
+            entropy_eval = 'Fort'
+        else:
+            entropy_eval = 'Très fort'
+        val = '{:.2f}'.format(self.entropy_value)
+        self.entropy.setText(f'Entropie  = {val}')
+        self.entropy_class.setText('('+entropy_eval+')')
 #--------------------------------------------------------------------------------
     def sep_changed(self, new_sep):
         if new_sep.isprintable():
             old_sep = self.sep_char
             self.sep_char = new_sep
-            #tmp = self.new_phrase.replace(old_sep, new_sep)
-            #print(old_sep, new_sep, self.new_phrase, tmp)
             self.display_phrase()
 #--------------------------------------------------------------------------------
     def generate_phrase(self):
@@ -328,6 +376,7 @@ class MainWindow(QMainWindow):
             lines = file.readlines()
         for line in lines:
             word_list.append(line.replace("\n", ""))
+        self.vocabulary_size = len(word_list)
         return word_list
 #--------------------------------------------------------------------------------
     def roll_dices(self):
