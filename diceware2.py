@@ -3,14 +3,14 @@
 #from tarfile import NUL
 #from cmath import phase
 #from typing import Optional
-from hmac import new
+#from hmac import new
 import sys
 from math import log2
+import secrets
+
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QRadioButton, QLabel, QGroupBox, QLineEdit, QListWidget, QGridLayout, QFileDialog, QDialog, QPushButton, QDialogButtonBox, QTextEdit
-
-import secrets
 
 h_size_max = 400
 main_size = QSize(h_size_max,280)
@@ -93,16 +93,17 @@ class MainWindow(QMainWindow):
         # A E F L N P Q R
 #--------------------------------------------------------------------------------
     def show_about(self):
-        text = self.read_file_text("about.inc")
-        self.show_info("À Propos", text)
+        text = self.read_file_text("about.html")
+        size = QSize(200, 40)
+        self.show_info("À Propos", text, size)
 #--------------------------------------------------------------------------------
     def show_documentation(self):
-        text = self.read_file_text("documentation.inc")
+        text = self.read_file_text("documentation.html")
         self.show_info("Documentation", text)
 #--------------------------------------------------------------------------------
     def show_readme(self):
-        text = self.read_file_text("README.md")
-        size = QSize(300, 200)
+        text = self.read_file_text("README.html")
+        size = QSize(300, 350)
         self.show_info("Readme", text, size)
 #--------------------------------------------------------------------------------
     def show_licence(self):
@@ -117,7 +118,7 @@ class MainWindow(QMainWindow):
         text_edit.setReadOnly(True)
         btn = QPushButton("Fermer")
         btn.setFixedSize(100, 25)
-        btn.clicked.connect(self.close_licence_window)
+        btn.clicked.connect(self.close_info_window)
         layout = QVBoxLayout()
         layout.addWidget(text_edit)
         layout.addWidget(btn, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -134,7 +135,7 @@ class MainWindow(QMainWindow):
                 line = f.readline()
         return text
 #--------------------------------------------------------------------------------
-    def close_licence_window(self):
+    def close_info_window(self):
         self.info_window.close()
 #--------------------------------------------------------------------------------
     def on_new(self):
