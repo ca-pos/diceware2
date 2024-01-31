@@ -1,0 +1,24 @@
+QGroupBox, #QWidgetEntropy {
+    border: 3px solid #ff3;
+    border-radius: 6px;
+    margin: 10px;
+    padding: 0px;
+}
+QGroupBox#GroupBox1, QGroupBox#GroupBox2{
+    margin-top: 9px;
+    padding-top: 0px;
+}
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top;
+    margin: 0px 0px;
+    left: 0px;
+    padding: 0px 5px 0px 5px;
+}
+CDialog {
+    background-color: #e66;
+}
+#BtnYes, #BtnNo {
+    background-color: #722;
+    color: #fff;
+}

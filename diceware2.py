@@ -12,8 +12,8 @@ from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QRadioButton, QLabel, QGroupBox, QLineEdit, QListWidget, QGridLayout, QFileDialog, QDialog, QPushButton, QDialogButtonBox, QTextEdit
 
-h_size_max = 400
-main_size = QSize(h_size_max,280)
+h_size_max = 420
+main_size = QSize(h_size_max,380)
     
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
@@ -24,11 +24,12 @@ class MainWindow(QMainWindow):
         ### Constantes de tailles des widgets
         ##
         self.h_window = h_size_max-16
-        self.g1g2_size = QSize(190, 90)
-        self.g3_size = QSize(self.h_window, 50)
-        self.phrase_size = QSize(self.h_window, 40)
+        self.g1g2_size = QSize(200, 78)
+        self.g3_size = QSize(self.h_window, 70)
+        self.phrase_size = QSize(self.h_window, 60)
 
-        self.bg_color = "#abc"
+        self.bg_color = "#89b"
+        self.frame_color = "#ff3"
 
         self.btn_nb_mots = list() # liste boutons (créés sans label)
         self.lbl_nb_mots = list() # liste labels à placer sous les boutons
@@ -40,9 +41,9 @@ class MainWindow(QMainWindow):
         self.entropy_value = 0
         self.entropy_eval = ''
 
+        #paramètres par défaut
         self.list = "l1.txt"
         self.list_only_words = True
-
         self.nb_words = 7
         self.sep_char = " "
 #--------------------------------------------------------------------------------
@@ -199,14 +200,17 @@ class MainWindow(QMainWindow):
     def create_groups(self):
         # Groupe 1. Composition de la phrase (mots ou mots/non mots)
         self.group_1 = QGroupBox( "Composition de la phrase")
+        self.group_1.setObjectName("GroupBox1")
         self.group_1.setFixedSize(self.g1g2_size)
 
         # Groupe 2. Nombre de mots de la phrase
         self.group_2 = QGroupBox("Nombre de mots")
+        self.group_2.setObjectName("GroupBox2")
         self.group_2.setFixedSize(self.g1g2_size)
 
         # Groupe 3. Choisir les caratères de séparation
         self.choix_sep = QGroupBox() # cadre autour du lineedit et du label
+        self.choix_sep.setObjectName("GBChoixSep")
         self.choix_sep.setFixedSize(self.g3_size)
 
         # Groupe 4. Affichage de la phrase secrète (pas de goupe)
@@ -216,12 +220,12 @@ class MainWindow(QMainWindow):
         ### Style de background (main layout)
         #
         # création d'un container permettant l'application d'un style
-        self.container = QWidget(self)
-        self.container.setFixedSize(main_size)
-        self.container.setStyleSheet(f"background-color: {self.bg_color}")
+        container = QWidget(self)
+        container.setFixedSize(main_size)
+        container.setStyleSheet(f"background-color: {self.bg_color}; ")
         # Le main layout a container comme parent
-        self.main_layout = QGridLayout(self.container)
-        self.main_layout.setSpacing(5)
+        self.main_layout = QGridLayout(container)
+        self.main_layout.setSpacing(0)
 
         ### Groupe 1. Composition de la phrase (mots ou mots/non mots)
         #
@@ -246,7 +250,8 @@ class MainWindow(QMainWindow):
         self.entropy_layout = QHBoxLayout()
         self.entropy_layout.setSpacing(0)
         # ce widget doit être créé ici pour pouvoir y assigner le layout !
-        self.entropy_window = QWidget() 
+        self.entropy_window = QWidget()
+        self.entropy_window.setObjectName("QWidgetEntropy")
         self.entropy_window.setLayout(self.entropy_layout)
 #--------------------------------------------------------------------------------
     def create_widgets(self):
@@ -279,14 +284,14 @@ class MainWindow(QMainWindow):
         #
         self.phrase = QListWidget()
         self.phrase.setFixedSize(self.phrase_size)
-        #self.phrase.addItem(self.texte)
+        self.phrase.setStyleSheet(f"border: 3px solid {self.frame_color}; border-radius: 6px; margin: 0px 10px")
 
         ### Groupe 5. Affichage de l'entropie et de son évaluation
         #
         # entropie_window = QWidget() a été créé dans la section layout
         # afin de pouvoir lui assigner un layout
-        self.entropy_window.setFixedSize(QSize(self.h_window, 30))
-        self.entropy_window.setStyleSheet("background-color: #779")
+        self.entropy_window.setFixedSize(QSize(self.h_window, 50))
+        self.entropy_window.setStyleSheet("background-color: #779; margin: 10px")
         # valeur numérique de l'entropie en bits
         self.entropy = QLabel(f"Entropie = {self.entropy_value}")
         self.entropy.setMaximumWidth(110)
@@ -323,6 +328,7 @@ class MainWindow(QMainWindow):
             self.gbox2_layout.addLayout(self.lyt_nb_mots[i])
     def on_btn(self):
         self.nb_words = self.sender().value
+        #print(">>>", self.nb_words)
         self.generate_phrase()
         self.entropy_value = self.compute_entropy()
         self.display_phrase()
@@ -411,6 +417,7 @@ class MainWindow(QMainWindow):
                 index = self.roll_dices()
                 phrase_list.append(word_list[index][5:].replace(" ", ""))
         self.new_phrase = phrase_list
+        self.phrase_saved = False
 #--------------------------------------------------------------------------------
     def read_words_list(self):
         word_list = list()
@@ -432,9 +439,12 @@ class MainWindow(QMainWindow):
 class CDialog(QDialog):
     def __init__(self, message = "") -> None:
         super().__init__()
+        self.retStatus = False  # évite une erreur si fermeture par la croix
         btn_yes = QPushButton("Oui")
+        btn_yes.setObjectName("BtnYes")
         btn_yes.clicked.connect(self.ok)
         btn_no = QPushButton("Annuler")
+        btn_no.setObjectName("BtnNo")
         btn_no.clicked.connect(self.cancel)
         buttons = QDialogButtonBox()
         buttons.addButton(btn_yes, QDialogButtonBox.ButtonRole.AcceptRole)
