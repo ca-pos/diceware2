@@ -1,16 +1,10 @@
-#from ast import main
-#from typing import Optional
-#from tarfile import NUL
-#from cmath import phase
-#from typing import Optional
-#from hmac import new
 import sys
 from math import log2
 import secrets
 
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QAction, QIcon
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QRadioButton, QLabel, QGroupBox, QLineEdit, QListWidget, QGridLayout, QFileDialog, QDialog, QPushButton, QDialogButtonBox, QTextEdit
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QRadioButton, QLabel, QGroupBox, QLineEdit, QListWidget, QGridLayout, QFileDialog, QDialog, QPushButton, QDialogButtonBox, QTextEdit, QSizePolicy
 
 h_size_max = 420
 main_size = QSize(h_size_max,380)
@@ -21,26 +15,22 @@ class MainWindow(QMainWindow):
         self.setUI()
 #--------------------------------------------------------------------------------
     def declare_variables(self):
+
         ### Constantes de tailles des widgets
         ##
         self.h_window = h_size_max-16
         self.g1g2_size = QSize(200, 78)
         self.g3_size = QSize(self.h_window, 70)
         self.phrase_size = QSize(self.h_window, 60)
-
         self.bg_color = "#89b"
         self.frame_color = "#ff3"
-
         self.btn_nb_mots = list() # liste boutons (créés sans label)
         self.lbl_nb_mots = list() # liste labels à placer sous les boutons
         self.lyt_nb_mots = list() # liste layouts pour placer boutons et labels
-
         self.new_phrase = list()
         self.phrase_saved = False
-
         self.entropy_value = 0
         self.entropy_eval = ''
-
         #paramètres par défaut
         self.list = "l1.txt"
         self.list_only_words = True
@@ -48,6 +38,7 @@ class MainWindow(QMainWindow):
         self.sep_char = " "
 #--------------------------------------------------------------------------------
     def setUI(self):
+        
         self.declare_variables()
         self.create_groups()
         self.create_layouts()
@@ -202,16 +193,22 @@ class MainWindow(QMainWindow):
         self.group_1 = QGroupBox( "Composition de la phrase")
         self.group_1.setObjectName("GroupBox1")
         self.group_1.setFixedSize(self.g1g2_size)
+        self.group_1.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.group_1.setStyleSheet('margin: 0px')
 
         # Groupe 2. Nombre de mots de la phrase
         self.group_2 = QGroupBox("Nombre de mots")
         self.group_2.setObjectName("GroupBox2")
         self.group_2.setFixedSize(self.g1g2_size)
+        self.group_2.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.group_2.setStyleSheet('margin: 0px')
 
         # Groupe 3. Choisir les caratères de séparation
         self.choix_sep = QGroupBox() # cadre autour du lineedit et du label
         self.choix_sep.setObjectName("GBChoixSep")
         self.choix_sep.setFixedSize(self.g3_size)
+        self.choix_sep.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.choix_sep.setStyleSheet('margin: 0px; padding: 0px')
 
         # Groupe 4. Affichage de la phrase secrète (pas de goupe)
 
@@ -284,14 +281,14 @@ class MainWindow(QMainWindow):
         #
         self.phrase = QListWidget()
         self.phrase.setFixedSize(self.phrase_size)
-        self.phrase.setStyleSheet(f"border: 3px solid {self.frame_color}; border-radius: 6px; margin: 0px 10px")
+        self.phrase.setStyleSheet(f"border: 3px solid {self.frame_color}; border-radius: 6px; margin: 0px; padding: 0px")
 
         ### Groupe 5. Affichage de l'entropie et de son évaluation
         #
         # entropie_window = QWidget() a été créé dans la section layout
         # afin de pouvoir lui assigner un layout
         self.entropy_window.setFixedSize(QSize(self.h_window, 50))
-        self.entropy_window.setStyleSheet("background-color: #779; margin: 10px")
+        self.entropy_window.setStyleSheet("background-color: #779; margin: 0px; padding: 0px")
         # valeur numérique de l'entropie en bits
         self.entropy = QLabel(f"Entropie = {self.entropy_value}")
         self.entropy.setMaximumWidth(110)
@@ -476,6 +473,15 @@ def main():
     main_window = MainWindow()
     main_window.setFixedSize(main_size)
     main_window.setWindowTitle("Générateur de phrases secrètes")
+
+    ### La section de code ci-dessous destinée à inclure le fichier qss dans le
+    #   code marche à peu près mais le résultat n'est pas tout à fait le même que
+    #   pour l'appel depuis la ligne de commande. À voir ultérieurement
+    #
+    # f = QFile("./style.qss")
+    # f.open(QIODevice.ReadOnly)
+    # app.setStyleSheet(QTextStream(f).readAll())
+
     main_window.show()
     sys.exit(app.exec())
 #################################################################################
